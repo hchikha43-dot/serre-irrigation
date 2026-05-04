@@ -102,7 +102,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
 .badge-fire{background:rgba(255,107,53,.15);color:var(--fire);border:1px solid rgba(255,107,53,.3)}
 
 /* ─── SECTEURS ─── */
-.secteurs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.secteurs-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;margin-bottom:1.5rem}
 .secteur-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s}
 .secteur-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
 .secteur-card.running{border-color:var(--green);background:rgba(63,185,80,.07)}
@@ -255,6 +255,53 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
   .form-grid{grid-template-columns:1fr}
   .form-grid.grid3{grid-template-columns:1fr 1fr}
   .chaud-grid{grid-template-columns:1fr}
+}
+@media (max-width: 768px) {
+
+  .main{
+    padding:1rem;
+  }
+
+  .hero{
+    padding:1.2rem;
+  }
+
+  .hero-title{
+    font-size:1.3rem;
+  }
+
+  .hero-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .cards-grid,
+  .secteurs-grid,
+  .chaud-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .form-grid,
+  .form-grid.grid3{
+    grid-template-columns:1fr !important;
+  }
+
+  .nav-links{
+    overflow-x:auto;
+    flex-wrap:nowrap;
+  }
+
+  .nav-links a{
+    font-size:0.75rem;
+    padding:5px 8px;
+  }
+
+  .data-table{
+    display:block;
+    overflow-x:auto;
+  }
+
 }
 </style>
 </head>
