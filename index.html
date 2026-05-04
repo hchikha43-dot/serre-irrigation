@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SerreIrrig — Gestion Irrigation & Chauffage</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2330;
+  --bg4: #21262d;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --green: #3fb950;
+  --green2: #238636;
+  --green3: #0d3320;
+  --blue: #58a6ff;
+  --blue2: #1f6feb;
+  --blue3: #0c2d6b;
+  --teal: #39d353;
+  --amber: #d29922;
+  --amber2: #bb8009;
+  --amber3: #341a00;
+  --red: #f85149;
+  --red2: #da3633;
+  --accent: #00c896;
+  --accent2: #00a07a;
+  --accent3: #003d2e;
+  --fire: #ff6b35;
+  --fire2: #cc4400;
+  --fire3: #3d1500;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;padding:0 2rem;gap:2rem}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--accent);letter-spacing:-0.5px;white-space:nowrap}
+.nav-logo span{color:var(--text2);font-size:0.9rem;font-family:'DM Sans',sans-serif;font-weight:300}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:0.85rem;padding:6px 12px;border-radius:6px;transition:all .2s;cursor:pointer;white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--text);background:var(--bg4)}
+.nav-links a.fire-link.active{background:var(--fire3);color:var(--fire)}
+.nav-badge{margin-left:auto;background:var(--accent3);color:var(--accent);font-size:0.72rem;padding:4px 10px;border-radius:20px;border:1px solid var(--accent2);white-space:nowrap}
+
+/* ─── LAYOUT ─── */
+.app{display:flex;margin-top:60px;min-height:calc(100vh - 60px)}
+.sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
+.sidebar-section{padding:0 1rem;margin-bottom:1.5rem}
+.sidebar-label{font-size:0.7rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:0 0.5rem;margin-bottom:6px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:0.875rem;color:var(--text2)}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:var(--accent3);color:var(--accent);font-weight:500}
+.sidebar-item.fire.active{background:var(--fire3);color:var(--fire)}
+.sidebar-item .icon{width:18px;height:18px;flex-shrink:0;opacity:0.7}
+.sidebar-item.active .icon{opacity:1}
+.main{flex:1;padding:2rem;overflow-y:auto}
+
+/* ─── PAGES ─── */
+.page{display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── HERO ─── */
+.hero{background:linear-gradient(135deg,var(--accent3) 0%,var(--bg2) 60%);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.hero.fire-hero{background:linear-gradient(135deg,var(--fire3) 0%,var(--bg2) 60%);border-color:rgba(255,107,53,0.2)}
+.hero::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(0,200,150,0.12) 0%,transparent 70%);pointer-events:none}
+.hero.fire-hero::before{background:radial-gradient(circle,rgba(255,107,53,0.12) 0%,transparent 70%)}
+.hero-title{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--text);margin-bottom:.4rem}
+.hero-title em{color:var(--accent);font-style:normal}
+.hero-title em.fire{color:var(--fire)}
+.hero-sub{color:var(--text2);font-size:0.9rem;max-width:540px}
+.hero-stats{display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap}
+.hero-stat .val{font-size:1.6rem;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.hero-stat .val.fire{color:var(--fire)}
+.hero-stat .lbl{font-size:0.75rem;color:var(--text2);margin-top:2px}
+
+/* ─── CARDS ─── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.card.accent-border{border-color:var(--accent2)}
+.card.fire-border{border-color:var(--fire2)}
+.card-title{font-size:0.78rem;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
+.card-title .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.card-title .dot.fire{background:var(--fire)}
+.metric-val{font-size:1.8rem;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace;line-height:1}
+.metric-unit{font-size:0.8rem;color:var(--text2);margin-top:4px}
+.metric-sub{font-size:0.75rem;color:var(--text3);margin-top:8px}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:500}
+.badge-green{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.25)}
+.badge-amber{background:rgba(210,153,34,.15);color:var(--amber);border:1px solid rgba(210,153,34,.25)}
+.badge-red{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.25)}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.25)}
+.badge-fire{background:rgba(255,107,53,.15);color:var(--fire);border:1px solid rgba(255,107,53,.3)}
+
+/* ─── SECTEURS ─── */
+.secteurs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.secteur-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s}
+.secteur-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.secteur-card.running{border-color:var(--green);background:rgba(63,185,80,.07)}
+.secteur-card.waiting{border-color:var(--border)}
+.secteur-card.done{border-color:var(--blue2);background:rgba(88,166,255,.05)}
+.secteur-num{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--text2);margin-bottom:8px}
+.secteur-card.running .secteur-num{color:var(--green)}
+.secteur-name{font-size:0.82rem;font-weight:500;color:var(--text);margin-bottom:4px}
+.secteur-detail{font-size:0.73rem;color:var(--text2)}
+.progress-bar{height:4px;background:var(--bg4);border-radius:2px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:var(--green);transition:width .5s}
+
+/* ─── TABLES ─── */
+.data-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.data-table th{text-align:left;padding:10px 14px;color:var(--text2);font-weight:500;font-size:0.75rem;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.data-table td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--bg3)}
+.data-table .mono{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent)}
+.data-table .mono.fire{color:var(--fire)}
+.data-table .result-row{background:rgba(0,200,150,.05)}
+.data-table .result-row td{color:var(--accent);font-weight:500}
+.data-table .result-row.fire-row{background:rgba(255,107,53,.05)}
+.data-table .result-row.fire-row td{color:var(--fire)}
+
+/* ─── FORMS ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.form-grid.grid3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:0.78rem;color:var(--text2);font-weight:500}
+.field input,.field select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.875rem;font-family:'DM Sans',sans-serif;transition:border .15s;outline:none}
+.field input:focus,.field select:focus{border-color:var(--accent2)}
+.field input.fire-input:focus{border-color:var(--fire2)}
+.field input::placeholder{color:var(--text3)}
+.field select option{background:var(--bg3)}
+.field .hint{font-size:0.72rem;color:var(--text3)}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent2);color:white}
+.btn-primary:hover{background:var(--accent);transform:translateY(-1px)}
+.btn-fire{background:var(--fire2);color:white}
+.btn-fire:hover{background:var(--fire);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-row{display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap}
+
+/* ─── SECTION HEADERS ─── */
+.section-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:1rem}
+.section-hdr h2{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--text)}
+.section-hdr p{font-size:0.82rem;color:var(--text2)}
+.page-title{font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--text);margin-bottom:.3rem}
+.page-sub{font-size:0.875rem;color:var(--text2);margin-bottom:1.5rem}
+.divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+
+/* ─── RESULT BOXES ─── */
+.result-box{background:var(--accent3);border:1px solid var(--accent2);border-radius:10px;padding:1rem 1.25rem;margin-top:1rem}
+.result-box.fire-box{background:var(--fire3);border-color:var(--fire2)}
+.result-box .rb-title{font-size:0.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:.75rem}
+.result-box.fire-box .rb-title{color:var(--fire)}
+.result-row2{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,200,150,.1);font-size:0.85rem}
+.fire-box .result-row2{border-bottom-color:rgba(255,107,53,.1)}
+.result-row2:last-child{border-bottom:none;padding-top:8px;margin-top:4px}
+.result-row2 .rk{color:var(--text2)}
+.result-row2 .rv{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:0.82rem}
+.fire-box .result-row2 .rv{color:var(--fire)}
+.result-row2.total-row .rk{font-weight:600;color:var(--text);font-size:0.9rem}
+.result-row2.total-row .rv{font-size:1rem;font-weight:600}
+
+/* ─── TEMPERATURE GAUGE ─── */
+.temp-gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:1rem 0}
+.temp-gauge{width:160px;height:80px;position:relative}
+.temp-gauge svg{width:100%;height:100%}
+.temp-display{text-align:center}
+.temp-big{font-family:'JetBrains Mono',monospace;font-size:2.4rem;font-weight:600;color:var(--text);line-height:1}
+.temp-label{font-size:0.75rem;color:var(--text2);margin-top:4px}
+
+/* ─── THERMOSTAT SLIDER ─── */
+.thermo-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(to right,var(--blue2),var(--green2),var(--amber2),var(--fire2));outline:none;margin:8px 0}
+.thermo-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--text);cursor:pointer;box-shadow:0 0 0 2px var(--fire2)}
+
+/* ─── TIMELINE ─── */
+.timeline{margin-top:1rem}
+.tl-item{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.83rem}
+.tl-time{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:0.8rem;min-width:52px;padding-top:1px}
+.tl-time.fire{color:var(--fire)}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.tl-dot.fire{background:var(--fire)}
+.tl-dot.done{background:var(--blue)}
+.tl-dot.pending{background:var(--text3)}
+.tl-content .tc-title{color:var(--text);font-weight:500}
+.tl-content .tc-sub{color:var(--text2);font-size:0.75rem;margin-top:2px}
+
+/* ─── TICKER ─── */
+.ticker{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;font-size:0.82rem}
+.ticker-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+.ticker-dot.fire{background:var(--fire)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ticker-text{color:var(--text2)}
+.ticker-text strong{color:var(--green)}
+.ticker-text strong.fire{color:var(--fire)}
+
+/* ─── BAR CHART ─── */
+.bar-chart{display:flex;gap:6px;align-items:flex-end;height:100px;margin-top:.75rem}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent2);opacity:.8;transition:height .4s;min-height:4px}
+.bar.fire-bar{background:var(--fire2)}
+.bar:hover{opacity:1}
+.bar-lbl{font-size:0.65rem;color:var(--text2)}
+.bar-val{font-size:0.65rem;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.bar-val.fire{color:var(--fire)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--bg3);border-radius:10px;padding:4px;width:fit-content;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.83rem;color:var(--text2);transition:all .15s}
+.tab.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* ─── ALERTS ─── */
+.alert{border-radius:10px;padding:.875rem 1.1rem;font-size:0.85rem;margin-bottom:1rem;display:flex;gap:10px;align-items:flex-start}
+.alert-info{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.2);color:var(--blue)}
+.alert-success{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.2);color:var(--green)}
+.alert-warn{background:rgba(210,153,34,.1);border:1px solid rgba(210,153,34,.2);color:var(--amber)}
+.alert-fire{background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.2);color:var(--fire)}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:1px}
+
+/* ─── CHAUDIERE STATUS CARD ─── */
+.chaud-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.chaud-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;transition:all .2s}
+.chaud-card.on{border-color:var(--fire2);background:rgba(255,107,53,.07)}
+.chaud-card.off{border-color:var(--border)}
+.chaud-icon{font-size:2rem;margin-bottom:6px}
+.chaud-name{font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.chaud-power{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--fire);margin-bottom:4px}
+.chaud-detail{font-size:0.72rem;color:var(--text2)}
+
+/* ─── PROGRESS RING ─── */
+.ring-wrap{display:flex;justify-content:center;margin:1rem 0}
+
+/* ─── STATUS BAR ─── */
+.statusbar{position:fixed;bottom:0;left:0;right:0;height:28px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 1rem;gap:2rem;font-size:0.7rem;color:var(--text3);z-index:100}
+.statusbar span{display:flex;align-items:center;gap:5px}
+.statusbar .sb-dot{width:5px;height:5px;border-radius:50%}
+.statusbar .sb-dot.green{background:var(--green)}
+.statusbar .sb-dot.amber{background:var(--amber)}
+.statusbar .sb-dot.fire{background:var(--fire)}
+
+@media(max-width:900px){
+  .sidebar{display:none}
+  .secteurs-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid.grid3{grid-template-columns:1fr 1fr}
+  .chaud-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SerreIrrig <span>v2.0</span></div>
+  <div class="nav-links">
+    <a class="active" onclick="gotoPage('dashboard')">Tableau de bord</a>
+    <a onclick="gotoPage('calcul')">Calcul hydraulique</a>
+    <a onclick="gotoPage('secteurs')">Secteurs</a>
+    <a onclick="gotoPage('programme')">Programme</a>
+    <a class="fire-link" onclick="gotoPage('chaleur')">🔥 Chauffage</a>
+    <a class="fire-link" onclick="gotoPage('controle')">🌡 Contrôle serre</a>
+    <a onclick="gotoPage('rapport')">Rapport</a>
+  </div>
+  <div class="nav-badge" id="nav-badge">● Système actif</div>
+</nav>
+
+<!-- APP -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Irrigation</div>
+    <div class="sidebar-item active" onclick="gotoPage('dashboard')">
+      <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 000 2h14a1 1 0 000-2H3z"/></svg>
+      Tableau de bord
+    </div>
+    <div class="sidebar-item" onclick="gotoPage('calcul')">
+      <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+      Calcul hydraulique
+    </div>
+    <div class="sidebar-item" onclick="gotoPage('secteurs')">
+      <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5z"/></svg>
+      Secteurs
+    </div>
+    <div class="sidebar-item" onclick="gotoPage('programme')">
+      <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+      Programme
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Chauffage & Climat</div>
+    <div class="sidebar-item fire" onclick="gotoPage('chaleur')">
+      <span style="font-size:16px">🔥</span>
+      Calcul chaleur
+    </div>
+    <div class="sidebar-item fire" onclick="gotoPage('controle')">
+      <span style="font-size:16px">🌡</span>
+      Contrôle serre
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Rapports</div>
+    <div class="sidebar-item" onclick="gotoPage('rapport')">
+      <svg class="icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3z" clip-rule="evenodd"/></svg>
+      Rapport complet
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Serre active</div>
+    <div style="padding:0 .5rem">
+      <div style="font-size:.8rem;color:var(--text);font-weight:500;margin-bottom:3px">Serre Canarienne A1</div>
+      <div style="font-size:.73rem;color:var(--text2)">100 m × 100 m · 1 ha</div>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">
+        <span class="badge badge-green">● Irrigation active</span>
+        <span class="badge badge-fire" id="sb-chaud-badge">🔥 Chauffage ON</span>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Météo & Climat</div>
+    <div style="padding:0 .5rem;font-size:.78rem;color:var(--text2)">
+      <div style="font-size:1.3rem;color:var(--amber);margin-bottom:4px">☀ <span id="sb-text">28°C</span></div>
+      <div>Humidité : <span id="sb-hum">55%</span></div>
+      <div>T intérieure : <span id="sb-tin" style="color:var(--fire)">18.2°C</span></div>
+      <div style="margin-top:6px;color:var(--fire)">🔥 Chauffage actif</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" style="padding-bottom:60px">
+
+<!-- ═══════ PAGE : DASHBOARD ═══════ -->
+<div id="page-dashboard" class="page active">
+  <div class="hero">
+    <div class="hero-title">Bonjour, <em>Bienvenue</em> sur SerreIrrig</div>
+    <div class="hero-sub">Gestion intelligente de l'irrigation et du chauffage de votre serre canarienne</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val">88</div><div class="lbl">m³ besoin journalier</div></div>
+      <div class="hero-stat"><div class="val">4</div><div class="lbl">secteurs actifs</div></div>
+      <div class="hero-stat"><div class="val fire" id="d-tin">18.2°C</div><div class="lbl">Température serre</div></div>
+      <div class="hero-stat"><div class="val fire">1 087</div><div class="lbl">kW besoin chaleur</div></div>
+      <div class="hero-stat"><div class="val fire">3</div><div class="lbl">chaudières actives</div></div>
+    </div>
+  </div>
+
+  <div class="ticker">
+    <div class="ticker-dot"></div>
+    <div class="ticker-text">Irrigation : Secteur <strong id="d-sect-actif">S1</strong> — Cycle 3/8 — <strong id="d-countdown">12 min restantes</strong> &nbsp;|&nbsp; 🔥 Chauffage : <strong class="fire">T intérieure 18.2°C</strong> / consigne <strong class="fire">18°C</strong> — Chaudières : <strong class="fire">1 500 kW installés</strong></div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card accent-border">
+      <div class="card-title"><span class="dot"></span>Consommation eau</div>
+      <div class="metric-val">33</div>
+      <div class="metric-unit">m³ / 88 m³ prévu</div>
+      <div class="bar-chart" id="d-chart-conso"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Pression réseau</div>
+      <div class="metric-val">2.9</div>
+      <div class="metric-unit">bar · TDH = 30 mCE</div>
+      <div class="metric-sub" style="margin-top:12px"><span class="badge badge-green">● Conforme</span></div>
+    </div>
+    <div class="card fire-border">
+      <div class="card-title"><span class="dot fire"></span>Température serre</div>
+      <div class="metric-val" id="d-temp-card">18.2</div>
+      <div class="metric-unit">°C · Consigne : 18°C</div>
+      <div class="metric-sub" style="margin-top:12px"><span class="badge badge-fire">🔥 Chauffage actif</span></div>
+    </div>
+    <div class="card fire-border">
+      <div class="card-title"><span class="dot fire"></span>Pellets consommés</div>
+      <div class="metric-val" id="d-pellets">812</div>
+      <div class="metric-unit">kg aujourd'hui (14h)</div>
+      <div class="metric-sub" style="margin-top:12px"><span class="badge badge-amber">⚠ Recharger silo 2</span></div>
+    </div>
+  </div>
+
+  <div class="section-hdr"><h2>État des secteurs irrigation</h2></div>
+  <div class="secteurs-grid">
+    <div class="secteur-card running">
+      <div class="secteur-num">S1</div>
+      <div class="secteur-name">Secteur Nord-Ouest</div>
+      <div class="secteur-detail">5 500 plants · 29 lignes</div>
+      <div style="margin-top:4px"><span class="badge badge-green">● En cours</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+    </div>
+    <div class="secteur-card waiting">
+      <div class="secteur-num">S2</div>
+      <div class="secteur-name">Secteur Nord-Est</div>
+      <div class="secteur-detail">5 500 plants · 29 lignes</div>
+      <div style="margin-top:4px"><span class="badge badge-blue">⏳ En attente</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="secteur-card done">
+      <div class="secteur-num">S3</div>
+      <div class="secteur-name">Secteur Sud-Ouest</div>
+      <div class="secteur-detail">5 500 plants · 29 lignes</div>
+      <div style="margin-top:4px"><span class="badge badge-blue">✓ Terminé</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+    </div>
+    <div class="secteur-card done">
+      <div class="secteur-num">S4</div>
+      <div class="secteur-name">Secteur Sud-Est</div>
+      <div class="secteur-detail">5 500 plants · 29 lignes</div>
+      <div style="margin-top:4px"><span class="badge badge-blue">✓ Terminé</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+    </div>
+  </div>
+
+  <div class="section-hdr"><h2>État des chaudières</h2><p>3 × ECO EC 500 — 1 500 kW installés</p></div>
+  <div class="chaud-grid">
+    <div class="chaud-card on">
+      <div class="chaud-icon">🔥</div>
+      <div class="chaud-name">Chaudière 1</div>
+      <div class="chaud-power">340 kW</div>
+      <div class="chaud-detail">68% charge · 76.8 kg/h pellets</div>
+      <div style="margin-top:6px"><span class="badge badge-fire">● Active</span></div>
+    </div>
+    <div class="chaud-card on">
+      <div class="chaud-icon">🔥</div>
+      <div class="chaud-name">Chaudière 2</div>
+      <div class="chaud-power">340 kW</div>
+      <div class="chaud-detail">68% charge · 76.8 kg/h pellets</div>
+      <div style="margin-top:6px"><span class="badge badge-fire">● Active</span></div>
+    </div>
+    <div class="chaud-card on">
+      <div class="chaud-icon">🔥</div>
+      <div class="chaud-name">Chaudière 3</div>
+      <div class="chaud-power">340 kW</div>
+      <div class="chaud-detail">68% charge · 76.8 kg/h pellets</div>
+      <div style="margin-top:6px"><span class="badge badge-fire">● Active</span></div>
+    </div>
+  </div>
+
+  <div class="alert alert-fire">
+    <span class="alert-icon">⚠</span>
+    <div><strong>Silo chaudière 2</strong> — Niveau pellets : 280 kg restants (autonomie estimée : 3.6h). Prévoir réapprovisionnement.</div>
+  </div>
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠</span>
+    <div><strong>Filtre à sable</strong> — Perte de charge mesurée : 5.8 mCE (seuil : 6.0 mCE). Prévoir nettoyage dans les 48h.</div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE : CALCUL HYDRAULIQUE ═══════ -->
+<div id="page-calcul" class="page">
+  <div class="page-title">Calcul hydraulique</div>
+  <div class="page-sub">Dimensionnement complet du réseau d'irrigation selon Phocaides (2008) et Darcy-Weisbach</div>
+  <div class="tabs" id="calc-tabs">
+    <div class="tab active" onclick="switchTab('t-besoins','calc-tabs',0)">Besoins en eau</div>
+    <div class="tab" onclick="switchTab('t-conduites','calc-tabs',1)">Conduites</div>
+    <div class="tab" onclick="switchTab('t-pertes','calc-tabs',2)">Pertes de charge</div>
+    <div class="tab" onclick="switchTab('t-pompe','calc-tabs',3)">Pompe & TDH</div>
+  </div>
+  <div id="t-besoins" class="tab-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="section-hdr"><h2>Paramètres de la serre</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Surface totale (ha)</label><input type="number" id="b_surf" value="1" step="0.1" oninput="calcB()"><div class="hint">ex. 1 ha = 100×100 m</div></div>
+          <div class="field"><label>Densité (plants/ha)</label><input type="number" id="b_dens" value="22000" step="500" oninput="calcB()"></div>
+          <div class="field"><label>Nombre de secteurs</label><input type="number" id="b_nsec" value="4" step="1" min="1" oninput="calcB()"></div>
+          <div class="field"><label>Dose journalière (L/plant)</label><input type="number" id="b_dose" value="4" step="0.5" oninput="calcB()"></div>
+          <div class="field"><label>Débit goutteur (L/h)</label><input type="number" id="b_qg" value="2" step="0.5" oninput="calcB()"></div>
+          <div class="field"><label>Espacement plants (m)</label><input type="number" id="b_esp" value="0.25" step="0.05" oninput="calcB()"></div>
+          <div class="field"><label>Longueur ligne (m)</label><input type="number" id="b_ll" value="46.5" step="0.5" oninput="calcB()"></div>
+        </div>
+      </div>
+      <div>
+        <div class="result-box">
+          <div class="rb-title">Résultats — Besoins en eau</div>
+          <div class="result-row2"><span class="rk">Plants total</span><span class="rv" id="rb_pt">22 000</span></div>
+          <div class="result-row2"><span class="rk">Plants / secteur</span><span class="rv" id="rb_ps">5 500</span></div>
+          <div class="result-row2"><span class="rk">Lignes / secteur</span><span class="rv" id="rb_ls">29</span></div>
+          <div class="result-row2"><span class="rk">Plants / ligne</span><span class="rv" id="rb_pl">190</span></div>
+          <div class="result-row2"><span class="rk">Débit ligne latérale</span><span class="rv" id="rb_ql">380 L/h</span></div>
+          <div class="result-row2"><span class="rk">Débit secteur (Q inst.)</span><span class="rv" id="rb_qs">11.0 m³/h</span></div>
+          <div class="result-row2"><span class="rk">Besoin / secteur / jour</span><span class="rv" id="rb_bsj">22.0 m³</span></div>
+          <div class="result-row2 total-row"><span class="rk">Besoin total journalier</span><span class="rv" id="rb_btj">88.0 m³/j</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="t-conduites" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="section-hdr"><h2>Paramètres</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Q conduite principale (m³/h)</label><input type="number" id="c_qp" value="11" step="0.5" oninput="calcC()"></div>
+          <div class="field"><label>Vitesse cible (m/s)</label><input type="number" id="c_v" value="1.7" step="0.05" oninput="calcC()"></div>
+          <div class="field"><label>Q ligne latérale (L/h)</label><input type="number" id="c_ql" value="380" step="10" oninput="calcC()"></div>
+          <div class="field"><label>Vitesse max latérale (m/s)</label><input type="number" id="c_vl" value="1.0" step="0.05" oninput="calcC()"></div>
+        </div>
+        <div class="alert alert-info" style="margin-top:8px"><span class="alert-icon">ℹ</span><div>D (mm) = 18,8 × √ [Q (m³/h) / V (m/s)]</div></div>
+      </div>
+      <div class="card">
+        <div class="section-hdr"><h2>Résultats</h2></div>
+        <table class="data-table">
+          <thead><tr><th>Conduite</th><th>D théorique</th><th>DN commercial</th><th>V réelle</th><th>État</th></tr></thead>
+          <tbody>
+            <tr><td>Principale</td><td class="mono" id="c_dth_p">—</td><td class="mono" id="c_dn_p">—</td><td class="mono" id="c_vr_p">—</td><td id="c_ok_p">—</td></tr>
+            <tr><td>Secondaire</td><td class="mono" id="c_dth_s">—</td><td class="mono" id="c_dn_s">—</td><td class="mono" id="c_vr_s">—</td><td id="c_ok_s">—</td></tr>
+            <tr><td>Latérale</td><td class="mono" id="c_dth_l">—</td><td class="mono" id="c_dn_l">—</td><td class="mono" id="c_vr_l">—</td><td id="c_ok_l">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="t-pertes" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="section-hdr"><h2>Paramètres hydrauliques</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Q (m³/h)</label><input type="number" id="p_q" value="11" step="0.5" oninput="calcP()"></div>
+          <div class="field"><label>Ø intérieur (mm)</label><input type="number" id="p_d" value="55.8" step="0.1" oninput="calcP()"></div>
+          <div class="field"><label>L conduite principale (m)</label><input type="number" id="p_l1" value="100" step="5" oninput="calcP()"></div>
+          <div class="field"><label>L conduite secondaire (m)</label><input type="number" id="p_l2" value="46.5" step="1" oninput="calcP()"></div>
+          <div class="field"><label>Nb vannes (K=0.30)</label><input type="number" id="p_nv" value="3" step="1" oninput="calcP()"></div>
+          <div class="field"><label>Nb tés (K=0.75)</label><input type="number" id="p_nt" value="3" step="1" oninput="calcP()"></div>
+        </div>
+      </div>
+      <div>
+        <div class="result-box">
+          <div class="rb-title">Pertes de charge — Darcy-Weisbach</div>
+          <div class="result-row2"><span class="rk">Vitesse V</span><span class="rv" id="p_v">—</span></div>
+          <div class="result-row2"><span class="rk">Reynolds Re</span><span class="rv" id="p_re">—</span></div>
+          <div class="result-row2"><span class="rk">Régime</span><span class="rv" id="p_reg">—</span></div>
+          <div class="result-row2"><span class="rk">λ (Blasius)</span><span class="rv" id="p_lam">—</span></div>
+          <div class="result-row2"><span class="rk">ΔH principale</span><span class="rv" id="p_jl1">—</span></div>
+          <div class="result-row2"><span class="rk">ΔH secondaire</span><span class="rv" id="p_jl2">—</span></div>
+          <div class="result-row2"><span class="rk">ΔH singulières</span><span class="rv" id="p_js">—</span></div>
+          <div class="result-row2 total-row"><span class="rk">Total ΔH réseau</span><span class="rv" id="p_tot">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="t-pompe" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="section-hdr"><h2>Composantes TDH</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>P min goutteur (mCE)</label><input type="number" id="t_pg" value="12.24" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>ΔH conduite princ. (mCE)</label><input type="number" id="t_jl1" value="2.78" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>ΔH conduite second. (mCE)</label><input type="number" id="t_jl2" value="1.29" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>ΔH singulières (mCE)</label><input type="number" id="t_js" value="0.245" step="0.05" oninput="calcT()"></div>
+          <div class="field"><label>ΔH lignes latérales (mCE)</label><input type="number" id="t_jlat" value="1.6" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>ΔH filtre (mCE)</label><input type="number" id="t_jfilt" value="5.09" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>ΔH fertigation (mCE)</label><input type="number" id="t_jfert" value="3.06" step="0.1" oninput="calcT()"></div>
+          <div class="field"><label>Marge sécurité (%)</label><input type="number" id="t_marge" value="10" step="1" oninput="calcT()"></div>
+          <div class="field"><label>Rendement pompe η</label><input type="number" id="t_eta" value="0.70" step="0.01" oninput="calcT()"></div>
+          <div class="field"><label>Débit Q (m³/h)</label><input type="number" id="t_q" value="11" step="0.5" oninput="calcT()"></div>
+        </div>
+      </div>
+      <div>
+        <div class="cards-grid" style="grid-template-columns:1fr 1fr">
+          <div class="card"><div class="card-title"><span class="dot"></span>TDH totale</div><div class="metric-val" id="t_tdh">—</div><div class="metric-unit">mCE</div></div>
+          <div class="card"><div class="card-title"><span class="dot" style="background:var(--blue)"></span>En bar</div><div class="metric-val" id="t_bar">—</div><div class="metric-unit">bar</div></div>
+          <div class="card"><div class="card-title"><span class="dot" style="background:var(--amber)"></span>Puiss. hydraulique</div><div class="metric-val" id="t_phyd">—</div><div class="metric-unit">kW</div></div>
+          <div class="card"><div class="card-title"><span class="dot" style="background:var(--red)"></span>Puiss. absorbée</div><div class="metric-val" id="t_pa">—</div><div class="metric-unit">kW</div></div>
+        </div>
+        <div class="result-box">
+          <div class="rb-title">Pompe recommandée</div>
+          <div class="result-row2"><span class="rk">HP calculé</span><span class="rv" id="t_hpc">—</span></div>
+          <div class="result-row2"><span class="rk">HP avec marge +25%</span><span class="rv" id="t_hpm">—</span></div>
+          <div class="result-row2 total-row"><span class="rk">Modèle recommandé</span><span class="rv" id="t_rec">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE : SECTEURS ═══════ -->
+<div id="page-secteurs" class="page">
+  <div class="page-title">Gestion des secteurs</div>
+  <div class="page-sub">Configuration et suivi de chaque secteur d'irrigation</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div class="section-hdr"><h2>Ajouter / modifier un secteur</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Nom du secteur</label><input type="text" id="s_nom" value="Secteur Nord-Ouest"></div>
+        <div class="field"><label>Numéro</label><select id="s_num"><option>S1</option><option>S2</option><option>S3</option><option>S4</option></select></div>
+        <div class="field"><label>Nombre de plants</label><input type="number" id="s_plants" value="5500" step="100" oninput="calcSect()"></div>
+        <div class="field"><label>Nombre de lignes</label><input type="number" id="s_lignes" value="29" step="1" oninput="calcSect()"></div>
+        <div class="field"><label>Débit goutteur (L/h)</label><input type="number" id="s_qg" value="2" step="0.5" oninput="calcSect()"></div>
+        <div class="field"><label>Statut</label><select id="s_statut"><option>Actif</option><option>En pause</option><option>Maintenance</option></select></div>
+      </div>
+      <div class="result-box" style="margin-top:.5rem">
+        <div class="rb-title">Calcul automatique</div>
+        <div class="result-row2"><span class="rk">Débit instantané</span><span class="rv" id="s_qinst">11.0 m³/h</span></div>
+        <div class="result-row2"><span class="rk">Plants / ligne</span><span class="rv" id="s_ppl">190</span></div>
+        <div class="result-row2"><span class="rk">Débit / ligne</span><span class="rv" id="s_ql">380 L/h</span></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary">Sauvegarder</button><button class="btn btn-ghost">Réinitialiser</button></div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><h2>Vue d'ensemble — 4 secteurs</h2></div>
+      <table class="data-table">
+        <thead><tr><th>Secteur</th><th>Plants</th><th>Q (m³/h)</th><th>Statut</th><th>Cycle</th></tr></thead>
+        <tbody>
+          <tr><td><strong>S1</strong> · Nord-Ouest</td><td>5 500</td><td class="mono">11.0</td><td><span class="badge badge-green">● Actif</span></td><td>3/8</td></tr>
+          <tr><td><strong>S2</strong> · Nord-Est</td><td>5 500</td><td class="mono">11.0</td><td><span class="badge badge-blue">⏳ Attente</span></td><td>2/8</td></tr>
+          <tr><td><strong>S3</strong> · Sud-Ouest</td><td>5 500</td><td class="mono">11.0</td><td><span class="badge badge-blue">✓ Terminé</span></td><td>2/8</td></tr>
+          <tr><td><strong>S4</strong> · Sud-Est</td><td>5 500</td><td class="mono">11.0</td><td><span class="badge badge-blue">✓ Terminé</span></td><td>2/8</td></tr>
+          <tr class="result-row"><td><strong>Total</strong></td><td>22 000</td><td class="mono">11.0</td><td colspan="2">4 secteurs séquentiels</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE : PROGRAMME ═══════ -->
+<div id="page-programme" class="page">
+  <div class="page-title">Programme d'irrigation</div>
+  <div class="page-sub">Configurez le calendrier journalier d'arrosage</div>
+  <div style="display:grid;grid-template-columns:340px 1fr;gap:16px">
+    <div class="card">
+      <div class="section-hdr"><h2>Paramètres</h2></div>
+      <div class="field" style="margin-bottom:12px"><label>Heure de démarrage</label><input type="time" id="pr_start" value="06:00" oninput="calcProg()"></div>
+      <div class="field" style="margin-bottom:12px"><label>Dose journalière / plant (L)</label><input type="number" id="pr_dose" value="4" step="0.5" oninput="calcProg()"></div>
+      <div class="field" style="margin-bottom:12px"><label>Débit goutteur (L/h)</label><input type="number" id="pr_qg" value="2" step="0.5" oninput="calcProg()"></div>
+      <div class="field" style="margin-bottom:12px"><label>Fréquence (cycles/jour)</label><input type="number" id="pr_freq" value="8" step="1" min="1" max="24" oninput="calcProg()"></div>
+      <div class="field" style="margin-bottom:12px"><label>Nombre de secteurs</label><input type="number" id="pr_ns" value="4" step="1" oninput="calcProg()"></div>
+      <div class="result-box" style="margin-top:.5rem">
+        <div class="rb-title">Synthèse</div>
+        <div class="result-row2"><span class="rk">Durée / cycle</span><span class="rv" id="pr_tc">15 min</span></div>
+        <div class="result-row2"><span class="rk">Tour complet</span><span class="rv" id="pr_tour">60 min</span></div>
+        <div class="result-row2 total-row"><span class="rk">Temps total / jour</span><span class="rv" id="pr_ttot">8 h</span></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="calcProg()">Générer le planning</button></div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><h2>Planning journalier</h2><p id="pr_date">Aujourd'hui</p></div>
+      <div class="timeline" id="pr_timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE : CHAUFFAGE — CALCUL BESOIN EN CHALEUR
+════════════════════════════════════════════════════════════ -->
+<div id="page-chaleur" class="page">
+  <div class="hero fire-hero">
+    <div class="hero-title">🔥 Calcul du <em class="fire">besoin en chaleur</em></div>
+    <div class="hero-sub">Dimensionnement thermique complet  — Équations du Qt et du Qi — Serre canarienne double polyéthylène</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val fire" id="h-qt">499</div><div class="lbl">kW pertes transmission</div></div>
+      <div class="hero-stat"><div class="val fire" id="h-qi">588</div><div class="lbl">kW pertes infiltration</div></div>
+      <div class="hero-stat"><div class="val fire" id="h-qtot">1 087</div><div class="lbl">kW besoin total</div></div>
+      <div class="hero-stat"><div class="val fire" id="h-nchaud">3</div><div class="lbl">chaudières 500 kW</div></div>
+    </div>
+  </div>
+
+  <div class="tabs" id="chaleur-tabs">
+    <div class="tab active" onclick="switchTab('ch-serre','chaleur-tabs',0)">Serre & Climat</div>
+    <div class="tab" onclick="switchTab('ch-resultats','chaleur-tabs',1)">Résultats thermiques</div>
+    <div class="tab" onclick="switchTab('ch-chaudieres','chaleur-tabs',2)">Chaudières</div>
+    <div class="tab" onclick="switchTab('ch-circuit','chaleur-tabs',3)">Circuit eau</div>
+    <div class="tab" onclick="switchTab('ch-pellets','chaleur-tabs',4)">Pellets & Autonomie</div>
+  </div>
+
+  <!-- Tab 0 : Serre & Climat -->
+  <div id="ch-serre" class="tab-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card fire-border">
+        <div class="section-hdr"><h2>Dimensions de la serre</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Longueur L (m)</label><input class="fire-input" type="number" id="ch_L" value="100" step="1" oninput="calcChaleur()"></div>
+          <div class="field"><label>Largeur W (m)</label><input class="fire-input" type="number" id="ch_W" value="100" step="1" oninput="calcChaleur()"></div>
+          <div class="field"><label>Hauteur murs H (m)</label><input class="fire-input" type="number" id="ch_H" value="5" step="0.5" oninput="calcChaleur()"></div>
+          <div class="field"><label>Type de toit</label><select id="ch_toit" onchange="calcChaleur()"><option value="plat">Plat (canarienne)</option><option value="v">En V (tunnel)</option></select></div>
+          <div class="field"><label>Hfaîtage (m) — si toit en V</label><input class="fire-input" type="number" id="ch_Hf" value="1.5" step="0.1" oninput="calcChaleur()"></div>
+        </div>
+        <div class="result-box fire-box" style="margin-top:.5rem">
+          <div class="rb-title">Géométrie calculée</div>
+          <div class="result-row2"><span class="rk">Surface au sol</span><span class="rv" id="ch_ssol">10 000 m²</span></div>
+          <div class="result-row2"><span class="rk">Surface enveloppe A</span><span class="rv" id="ch_A">12 000 m²</span></div>
+          <div class="result-row2 total-row"><span class="rk">Volume intérieur V</span><span class="rv" id="ch_V">50 000 m³</span></div>
+        </div>
+      </div>
+      <div class="card fire-border">
+        <div class="section-hdr"><h2>Paramètres climatiques</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Température intérieure Ti (°C)</label><input class="fire-input" type="number" id="ch_Ti" value="18" step="1" oninput="calcChaleur()"><div class="hint">Culture tomate : 16–20°C</div></div>
+          <div class="field"><label>Température extérieure To (°C)</label><input class="fire-input" type="number" id="ch_To" value="5" step="1" oninput="calcChaleur()"><div class="hint">Skhira : min 5°C (janv.)</div></div>
+          <div class="field"><label>Coefficient U (W/m²·°C)</label><input class="fire-input" type="number" id="ch_U" value="3.2" step="0.1" oninput="calcChaleur()"><div class="hint">Double poly : 3.0–4.2 (Rafferty 1998)</div></div>
+          <div class="field"><label>ACH — renouvellement air (h⁻¹)</label><input class="fire-input" type="number" id="ch_ACH" value="0.75" step="0.05" oninput="calcChaleur()"><div class="hint">Double poly : 0.5–1.0 </div></div>
+          <div class="field"><label>Rendement chaudière η</label><input class="fire-input" type="number" id="ch_eta" value="0.90" step="0.01" oninput="calcChaleur()"><div class="hint">ECO EC 500 : 90%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 1 : Résultats thermiques -->
+  <div id="ch-resultats" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="card fire-border">
+          <div class="section-hdr"><h2>Pertes par transmission Qt</h2></div>
+          <div class="alert alert-fire"><span class="alert-icon">📐</span><div><strong>Équation </strong> : Qt = U × A × (Ti − To)</div></div>
+          <div class="result-box fire-box">
+            <div class="rb-title">Calcul pas à pas</div>
+            <div class="result-row2"><span class="rk">U</span><span class="rv" id="r_U">3.2 W/m²·°C</span></div>
+            <div class="result-row2"><span class="rk">A (enveloppe)</span><span class="rv" id="r_A">12 000 m²</span></div>
+            <div class="result-row2"><span class="rk">ΔT = Ti − To</span><span class="rv" id="r_dT">13 °C</span></div>
+            <div class="result-row2"><span class="rk">U × A × ΔT</span><span class="rv" id="r_UAdT">499 200 W</span></div>
+            <div class="result-row2 total-row"><span class="rk">Qt</span><span class="rv" id="r_Qt">499.2 kW</span></div>
+          </div>
+        </div>
+        <div class="card fire-border" style="margin-top:12px">
+          <div class="section-hdr"><h2>Pertes par infiltration Qi</h2></div>
+          <div class="alert alert-fire"><span class="alert-icon">💨</span><div><strong>Équation </strong> : Qi = V × ACH × Cp × ρ × ΔT / 1000</div></div>
+          <div class="result-box fire-box">
+            <div class="rb-title">Calcul pas à pas</div>
+            <div class="result-row2"><span class="rk">V</span><span class="rv" id="r_V">50 000 m³</span></div>
+            <div class="result-row2"><span class="rk">ACH</span><span class="rv" id="r_ACH">0.75 h⁻¹</span></div>
+            <div class="result-row2"><span class="rk">Cp air</span><span class="rv">1 005 J/kg·K</span></div>
+            <div class="result-row2"><span class="rk">ρ air</span><span class="rv">1.2 kg/m³</span></div>
+            <div class="result-row2 total-row"><span class="rk">Qi</span><span class="rv" id="r_Qi">587.9 kW</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="result-box fire-box">
+          <div class="rb-title">Bilan thermique total</div>
+          <div class="result-row2"><span class="rk">Pertes transmission Qt</span><span class="rv" id="r2_Qt">499.2 kW</span></div>
+          <div class="result-row2"><span class="rk">Pertes infiltration Qi</span><span class="rv" id="r2_Qi">587.9 kW</span></div>
+          <div class="result-row2 total-row"><span class="rk">Q TOTAL SERRE</span><span class="rv" id="r2_Qtot">1 087.1 kW</span></div>
+          <div style="margin-top:1rem">
+            <div style="font-size:.75rem;color:var(--text2);margin-bottom:6px">Répartition des pertes</div>
+            <div style="height:12px;background:var(--bg4);border-radius:6px;overflow:hidden;display:flex">
+              <div id="bar_qt" style="height:100%;background:var(--fire2);border-radius:6px 0 0 6px;transition:width .4s"></div>
+              <div id="bar_qi" style="height:100%;background:var(--blue2);transition:width .4s"></div>
+            </div>
+            <div style="display:flex;gap:1rem;margin-top:6px;font-size:.72rem">
+              <span style="color:var(--fire)">■ Transmission <span id="pct_qt">46%</span></span>
+              <span style="color:var(--blue)">■ Infiltration <span id="pct_qi">54%</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="cards-grid" style="margin-top:12px">
+          <div class="card fire-border"><div class="card-title"><span class="dot fire"></span>Qt</div><div class="metric-val fire" id="m_Qt">499</div><div class="metric-unit">kW</div></div>
+          <div class="card fire-border"><div class="card-title"><span class="dot fire"></span>Qi</div><div class="metric-val fire" id="m_Qi">588</div><div class="metric-unit">kW</div></div>
+          <div class="card fire-border"><div class="card-title"><span class="dot fire"></span>Q total</div><div class="metric-val fire" id="m_Qtot">1 087</div><div class="metric-unit">kW</div></div>
+          <div class="card fire-border"><div class="card-title"><span class="dot fire"></span>P chaudière</div><div class="metric-val fire" id="m_Pchaud">1 208</div><div class="metric-unit">kW requis</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2 : Chaudières -->
+  <div id="ch-chaudieres" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card fire-border">
+        <div class="section-hdr"><h2>Dimensionnement chaudières</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Puissance unitaire (kW)</label><input class="fire-input" type="number" id="ck_Punit" value="500" step="50" oninput="calcChaud()"></div>
+          <div class="field"><label>Marque / Modèle</label><input type="text" id="ck_modele" value="ECO EC 500" placeholder="Modèle chaudière"></div>
+          <div class="field"><label>Rendement η (%)</label><input class="fire-input" type="number" id="ck_eta" value="90" step="1" oninput="calcChaud()"></div>
+          <div class="field"><label>Consommation nominale (kg/h)</label><input class="fire-input" type="number" id="ck_conso" value="113" step="1" oninput="calcChaud()"></div>
+        </div>
+        <div class="result-box fire-box">
+          <div class="rb-title">Résultats dimensionnement</div>
+          <div class="result-row2"><span class="rk">P chaudière requise</span><span class="rv" id="ck_Preq">1 208 kW</span></div>
+          <div class="result-row2"><span class="rk">Nombre de chaudières</span><span class="rv" id="ck_N">3</span></div>
+          <div class="result-row2"><span class="rk">Puissance installée</span><span class="rv" id="ck_Pinst">1 500 kW</span></div>
+          <div class="result-row2 total-row"><span class="rk">Marge de sécurité</span><span class="rv" id="ck_marge">+24%</span></div>
+        </div>
+        <div class="alert alert-fire" style="margin-top:12px">
+          <span class="alert-icon">💡</span>
+          <div>Avec 3 chaudières en parallèle : si l'une tombe en panne, les 2 autres assurent 67% du besoin et protègent les cultures.</div>
+        </div>
+      </div>
+      <div>
+        <div class="section-hdr"><h2>Fiche technique — ECO EC 500</h2></div>
+        <table class="data-table">
+          <thead><tr><th>Paramètre</th><th>EC 500</th><th>3 unités</th></tr></thead>
+          <tbody>
+            <tr><td>Puissance nominale</td><td class="mono fire">500 kW</td><td class="mono fire" id="ck_t1">1 500 kW</td></tr>
+            <tr><td>Puissance max brûleur</td><td class="mono">554 kW</td><td class="mono" id="ck_t2">1 662 kW</td></tr>
+            <tr><td>Rendement thermique</td><td class="mono">90%</td><td class="mono">90%</td></tr>
+            <tr><td>Consommation nominale</td><td class="mono">113 kg/h</td><td class="mono" id="ck_t3">339 kg/h</td></tr>
+            <tr><td>Capacité silo intégré</td><td class="mono">1 050 kg</td><td class="mono" id="ck_t4">3 150 kg</td></tr>
+            <tr><td>Autonomie silo (pleine charge)</td><td class="mono">6 h</td><td class="mono">6 h</td></tr>
+            <tr><td>Volume eau intégré</td><td class="mono">1 485 L</td><td class="mono" id="ck_t5">4 455 L</td></tr>
+            <tr><td>Pression max circuit</td><td class="mono">3 bar</td><td class="mono">3 bar</td></tr>
+            <tr><td>Température max eau</td><td class="mono">85°C</td><td class="mono">85°C ✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3 : Circuit eau -->
+  <div id="ch-circuit" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card fire-border">
+        <div class="section-hdr"><h2>Paramètres du circuit</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Température départ (°C)</label><input class="fire-input" type="number" id="cc_Tdep" value="70" step="1" oninput="calcCircuit()"></div>
+          <div class="field"><label>Température retour (°C)</label><input class="fire-input" type="number" id="cc_Tret" value="50" step="1" oninput="calcCircuit()"></div>
+          <div class="field"><label>Espacement circuits (m)</label><input class="fire-input" type="number" id="cc_esp" value="4.35" step="0.05" oninput="calcCircuit()"></div>
+          <div class="field"><label>Vitesse eau (m/s)</label><input class="fire-input" type="number" id="cc_v" value="0.70" step="0.05" oninput="calcCircuit()"><div class="hint">Recommandé : 0.7–1.0 m/s (Croquelois)</div></div>
+        </div>
+        <div class="result-box fire-box">
+          <div class="rb-title">Résultats circuit — Équation III.9 (Chafai, 2024)</div>
+          <div class="result-row2"><span class="rk">ΔT eau</span><span class="rv" id="cc_dT">20 °C</span></div>
+          <div class="result-row2"><span class="rk">Débit massique ṁ</span><span class="rv" id="cc_meau">12.99 kg/s</span></div>
+          <div class="result-row2"><span class="rk">Débit volumique total</span><span class="rv" id="cc_Qeau">46.8 m³/h</span></div>
+          <div class="result-row2"><span class="rk">Nombre de circuits</span><span class="rv" id="cc_Ncirc">23</span></div>
+          <div class="result-row2"><span class="rk">Débit par circuit</span><span class="rv" id="cc_Qcirc">2.03 m³/h</span></div>
+          <div class="result-row2"><span class="rk">Diamètre calculé</span><span class="rv" id="cc_Dcalc">32.0 mm</span></div>
+          <div class="result-row2"><span class="rk">DN tuyaux circuits</span><span class="rv" id="cc_DN">DN 32</span></div>
+          <div class="result-row2"><span class="rk">Vitesse réelle</span><span class="rv" id="cc_Vreel">0.70 m/s ✓</span></div>
+          <div class="result-row2"><span class="rk">DN collecteur principal</span><span class="rv" id="cc_DNcoll">DN 150</span></div>
+          <div class="result-row2 total-row"><span class="rk">Longueur totale réseau</span><span class="rv" id="cc_Ltot">4 800 m</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-hdr"><h2>Tableau réseau tuyaux</h2></div>
+        <table class="data-table" id="cc_table">
+          <thead><tr><th>Élément</th><th>Qté</th><th>DN</th><th>Long. (m)</th><th>Débit</th></tr></thead>
+          <tbody id="cc_tbody"></tbody>
+        </table>
+        <div class="alert alert-fire" style="margin-top:12px">
+          <span class="alert-icon">ℹ</span>
+          <div>Cp eau = 4 184 J/kg·K . Formule Croquelois pour vitesse recommandée.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4 : Pellets -->
+  <div id="ch-pellets" class="tab-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card fire-border">
+        <div class="section-hdr"><h2>Paramètres consommation</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Heures de chauffage / jour</label><input class="fire-input" type="number" id="pl_hj" value="14" step="1" min="1" max="24" oninput="calcPellets()"><div class="hint">Hiver : 12–16h/jour</div></div>
+          <div class="field"><label>Jours de chauffage / saison</label><input class="fire-input" type="number" id="pl_js" value="120" step="10" oninput="calcPellets()"><div class="hint">Oct. → Fév. ≈ 120 jours</div></div>
+          <div class="field"><label>Taux de charge moyen (%)</label><input class="fire-input" type="number" id="pl_tc" value="60" step="5" min="10" max="100" oninput="calcPellets()"><div class="hint">En pratique : 50–70%</div></div>
+          <div class="field"><label>Prix pellets (DT/tonne)</label><input class="fire-input" type="number" id="pl_prix" value="350" step="10" oninput="calcPellets()"></div>
+        </div>
+      </div>
+      <div>
+        <div class="result-box fire-box">
+          <div class="rb-title">Consommation pellets — 3 chaudières ECO EC 500</div>
+          <div class="result-row2"><span class="rk">Conso nominale (3 chaud.)</span><span class="rv">339 kg/h</span></div>
+          <div class="result-row2"><span class="rk">Conso réelle (taux de charge)</span><span class="rv" id="pl_creel">—</span></div>
+          <div class="result-row2"><span class="rk">Conso par jour</span><span class="rv" id="pl_cjour">—</span></div>
+          <div class="result-row2"><span class="rk">Autonomie silo intégré (3 150 kg)</span><span class="rv" id="pl_auto">—</span></div>
+          <div class="result-row2"><span class="rk">Conso par saison</span><span class="rv" id="pl_csais">—</span></div>
+          <div class="result-row2 total-row"><span class="rk">Coût estimé / saison</span><span class="rv" id="pl_cout">—</span></div>
+        </div>
+        <div class="alert alert-fire" style="margin-top:12px">
+          <span class="alert-icon">💡</span>
+          <div id="pl_conseil">Prévoir un silo externe de 3–5 tonnes par chaudière pour assurer 3–5 jours d'autonomie sans remplissage.</div>
+        </div>
+        <div class="cards-grid" style="margin-top:12px;grid-template-columns:1fr 1fr">
+          <div class="card fire-border">
+            <div class="card-title"><span class="dot fire"></span>Heures chauffage / an</div>
+            <div class="metric-val fire" id="pl_hant">1 680</div>
+            <div class="metric-unit">h / saison</div>
+          </div>
+          <div class="card fire-border">
+            <div class="card-title"><span class="dot fire"></span>Silo recommandé</div>
+            <div class="metric-val fire" id="pl_silo">5</div>
+            <div class="metric-unit">tonnes / chaudière</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE : CONTROLE SERRE — THERMOSTAT & MONITORING
+════════════════════════════════════════════════════════════ -->
+<div id="page-controle" class="page">
+  <div class="hero fire-hero">
+    <div class="hero-title">🌡 Contrôle <em class="fire">température serre</em></div>
+    <div class="hero-sub">Monitoring en temps réel et contrôle du chauffage — Consigne, températures, alertes, nombre d'heures de fonctionnement</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val fire" id="ct-tin">18.2°C</div><div class="lbl">T intérieure actuelle</div></div>
+      <div class="hero-stat"><div class="val fire" id="ct-consigne">18°C</div><div class="lbl">Consigne</div></div>
+      <div class="hero-stat"><div class="val" id="ct-text">5°C</div><div class="lbl">T extérieure</div></div>
+      <div class="hero-stat"><div class="val fire" id="ct-hchauf">8.5</div><div class="lbl">heures chauffage aujourd'hui</div></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:1rem">
+    <!-- Thermostat -->
+    <div class="card fire-border" style="text-align:center">
+      <div class="card-title" style="justify-content:center"><span class="dot fire"></span>Thermostat — Consigne</div>
+      <div style="font-size:3.5rem;font-weight:700;color:var(--fire);font-family:'JetBrains Mono',monospace;margin:1rem 0" id="ct-consigne-big">18°C</div>
+      <input class="thermo-slider" type="range" id="ct-slider" min="10" max="30" value="18" oninput="updateThermostat(this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text3)"><span>10°C</span><span>30°C</span></div>
+      <div class="btn-row" style="justify-content:center;margin-top:.75rem">
+        <button class="btn btn-fire" onclick="setConsigne()">Appliquer</button>
+        <button class="btn btn-ghost" onclick="ct_slider.value=18;updateThermostat(18)">Reset 18°C</button>
+      </div>
+    </div>
+
+    <!-- Températures -->
+    <div class="card fire-border">
+      <div class="card-title"><span class="dot fire"></span>Températures en temps réel</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:.5rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <span style="font-size:.8rem;color:var(--text2)">🌡 Serre (intérieure)</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--fire);font-size:1.1rem" id="ct-t1">18.2°C</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <span style="font-size:.8rem;color:var(--text2)">🌍 Extérieure</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--blue);font-size:1.1rem" id="ct-t2">5.0°C</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <span style="font-size:.8rem;color:var(--text2)">💧 Eau départ chaud.</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:1.1rem" id="ct-t3">70.0°C</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <span style="font-size:.8rem;color:var(--text2)">💧 Eau retour chaud.</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--text2);font-size:1.1rem" id="ct-t4">50.0°C</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <span style="font-size:.8rem;color:var(--text2)">💧 Humidité serre</span>
+          <span style="font-family:'JetBrains Mono',monospace;color:var(--green);font-size:1.1rem" id="ct-hum">72%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statut chaudières -->
+    <div class="card fire-border">
+      <div class="card-title"><span class="dot fire"></span>État des chaudières</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:.5rem" id="ct-chaud-status">
+        <div class="chaud-card on" style="display:flex;align-items:center;gap:12px;text-align:left;padding:.75rem">
+          <span style="font-size:1.5rem">🔥</span>
+          <div style="flex:1">
+            <div class="chaud-name">Chaud. 1</div>
+            <div class="chaud-detail">340 kW · 68% · Silo OK</div>
+          </div>
+          <span class="badge badge-fire">ON</span>
+        </div>
+        <div class="chaud-card on" style="display:flex;align-items:center;gap:12px;text-align:left;padding:.75rem">
+          <span style="font-size:1.5rem">🔥</span>
+          <div style="flex:1">
+            <div class="chaud-name">Chaud. 2</div>
+            <div class="chaud-detail">340 kW · 68% · Silo bas ⚠</div>
+          </div>
+          <span class="badge badge-amber">⚠</span>
+        </div>
+        <div class="chaud-card on" style="display:flex;align-items:center;gap:12px;text-align:left;padding:.75rem">
+          <span style="font-size:1.5rem">🔥</span>
+          <div style="flex:1">
+            <div class="chaud-name">Chaud. 3</div>
+            <div class="chaud-detail">340 kW · 68% · Silo OK</div>
+          </div>
+          <span class="badge badge-fire">ON</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compteur heures + Planning chauffage -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card fire-border">
+      <div class="section-hdr"><h2>Compteur d'heures de chauffage</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Heures objectif / jour (h)</label><input class="fire-input" type="number" id="ct_hobj" value="14" step="1" min="1" max="24" oninput="calcHeure()"></div>
+        <div class="field"><label>Température consigne (°C)</label><input class="fire-input" type="number" id="ct_cons" value="18" step="1" oninput="calcHeure()"></div>
+        <div class="field"><label>T ext. nuit min. (°C)</label><input class="fire-input" type="number" id="ct_tnuit" value="5" step="1" oninput="calcHeure()"></div>
+        <div class="field"><label>T ext. jour moy. (°C)</label><input class="fire-input" type="number" id="ct_tjour" value="14" step="1" oninput="calcHeure()"></div>
+      </div>
+      <div class="result-box fire-box">
+        <div class="rb-title">Estimation heures de chauffage</div>
+        <div class="result-row2"><span class="rk">Heures chauf. nocturne</span><span class="rv" id="ct_hnuit">—</span></div>
+        <div class="result-row2"><span class="rk">Heures chauf. diurne</span><span class="rv" id="ct_hjour">—</span></div>
+        <div class="result-row2"><span class="rk">Total heures / jour</span><span class="rv" id="ct_htot">—</span></div>
+        <div class="result-row2"><span class="rk">Total heures / saison (120j)</span><span class="rv" id="ct_hsais">—</span></div>
+        <div class="result-row2 total-row"><span class="rk">Degré-jours chauffage (DJC)</span><span class="rv" id="ct_djc">—</span></div>
+      </div>
+    </div>
+    <div class="card fire-border">
+      <div class="section-hdr"><h2>Programme chauffage journalier</h2></div>
+      <div class="form-grid">
+        <div class="field"><label>Début chauffage nuit</label><input type="time" id="ct_tnuit_h" value="18:00" oninput="calcProgChauf()"></div>
+        <div class="field"><label>Fin chauffage nuit</label><input type="time" id="ct_tnuit_fin" value="08:00" oninput="calcProgChauf()"></div>
+        <div class="field"><label>Consigne nuit (°C)</label><input class="fire-input" type="number" id="ct_cons_nuit" value="16" step="1" oninput="calcProgChauf()"></div>
+        <div class="field"><label>Consigne jour (°C)</label><input class="fire-input" type="number" id="ct_cons_jour" value="18" step="1" oninput="calcProgChauf()"></div>
+      </div>
+      <div class="timeline" id="ct_timeline" style="max-height:280px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- Alertes température -->
+  <div style="margin-top:1rem">
+    <div class="section-hdr"><h2>Alertes & Seuils</h2></div>
+    <div class="form-grid grid3">
+      <div class="field"><label>Seuil alerte froid (°C)</label><input class="fire-input" type="number" id="ct_seuil_froid" value="14" step="1" oninput="checkAlertes()"></div>
+      <div class="field"><label>Seuil alerte chaud (°C)</label><input class="fire-input" type="number" id="ct_seuil_chaud" value="28" step="1" oninput="checkAlertes()"></div>
+      <div class="field"><label>Seuil humidité max (%)</label><input class="fire-input" type="number" id="ct_seuil_hum" value="85" step="5" oninput="checkAlertes()"></div>
+    </div>
+    <div id="ct_alertes"></div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE : RAPPORT ═══════ -->
+<div id="page-rapport" class="page">
+  <div class="page-title">Rapport technique complet</div>
+  <div class="page-sub">Synthèse irrigation + chauffage — Données issues des modules de calcul</div>
+  <div class="alert alert-info"><span class="alert-icon">ℹ</span><div>Rapport généré automatiquement. </div></div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="section-hdr"><h2>1. Organisation générale</h2></div>
+    <table class="data-table">
+      <thead><tr><th>Paramètre</th><th>Valeur</th><th>Unité</th></tr></thead>
+      <tbody>
+        <tr><td>Surface totale</td><td class="mono">1 ha (100 m × 100 m)</td><td>ha</td></tr>
+        <tr><td>Culture</td><td class="mono">Tomate — exportation</td><td>—</td></tr>
+        <tr><td>Densité de plantation</td><td class="mono">22 000</td><td>plants/ha</td></tr>
+        <tr><td>Secteurs irrigation</td><td class="mono">4</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="section-hdr"><h2>2. Besoin en chaleur (Chafai, 2024)</h2></div>
+    <table class="data-table">
+      <thead><tr><th>Composante</th><th>Formule</th><th>Valeur</th></tr></thead>
+      <tbody>
+        <tr><td>Surface enveloppe A</td><td class="mono">2(L+W)×H + L×W</td><td class="mono fire">12 000 m²</td></tr>
+        <tr><td>Volume V</td><td class="mono">L × W × H</td><td class="mono fire">50 000 m³</td></tr>
+        <tr><td>Pertes transmission Qt</td><td class="mono">U × A × ΔT</td><td class="mono fire">499.2 kW</td></tr>
+        <tr><td>Pertes infiltration Qi</td><td class="mono">V×ACH×Cp×ρ×ΔT/1000</td><td class="mono fire">587.9 kW</td></tr>
+        <tr class="result-row fire-row"><td><strong>BESOIN TOTAL</strong></td><td class="mono">Qt + Qi</td><td class="mono fire"><strong>1 087.1 kW</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="section-hdr"><h2>3. Chaudières</h2></div>
+    <table class="data-table">
+      <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+      <tbody>
+        <tr><td>Modèle</td><td class="mono fire">3 × ECO EC 500</td></tr>
+        <tr><td>Puissance installée</td><td class="mono fire">1 500 kW (+24% de marge)</td></tr>
+        <tr><td>Débit eau total</td><td class="mono">46.8 m³/h</td></tr>
+        <tr><td>Circuit tuyaux</td><td class="mono">23 circuits DN 32 — espacement 4.35 m</td></tr>
+        <tr><td>Collecteur principal</td><td class="mono">DN 150</td></tr>
+        <tr><td>Longueur totale réseau</td><td class="mono">4 800 m linéaires</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="section-hdr"><h2>4. Irrigation</h2></div>
+    <table class="data-table">
+      <thead><tr><th>Conduite</th><th>D théorique</th><th>DN retenu</th><th>Débit</th><th>Vitesse</th></tr></thead>
+      <tbody>
+        <tr><td>Principale</td><td class="mono">47.8 mm</td><td class="mono">DN 63</td><td class="mono">11 m³/h</td><td class="mono">1.25 m/s</td></tr>
+        <tr><td>Latérale</td><td class="mono">13–15 mm</td><td class="mono">PE 16 mm</td><td class="mono">380 L/h</td><td class="mono">0.87 m/s</td></tr>
+        <tr class="result-row"><td><strong>Pompe</strong></td><td colspan="2" class="mono">3 HP / 2.2 kW</td><td colspan="2" class="mono">TDH 30 mCE</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="font-size:.75rem;color:var(--text3);font-style:italic;margin-top:1rem">
+    Références : Phocaides A. (2008) FAO · Chafai M. (2024) Université Guelma — Équations II.5, II.6, III.3 · Rafferty K.D. (1998) Geo-Heat Center · ECO Chaudière EC 130–500
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span><span class="sb-dot green"></span> Irrigation active</span>
+  <span><span class="sb-dot green"></span> Pompe 3HP — 2.9 bar</span>
+  <span><span class="sb-dot fire"></span> Chauffage : <span id="sb-temp-status" style="color:var(--fire)">18.2°C / 18°C</span></span>
+  <span><span class="sb-dot amber"></span> Filtre: 5.8 mCE</span>
+  <span id="sb-clock">—</span>
+  <span style="margin-left:auto;color:var(--text3)">SerreIrrig v2.0 · Phocaides (2008) · Chafai (2024)</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+function gotoPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'" + id + "'")) a.classList.add('active');
+  });
+  document.querySelectorAll('.sidebar-item').forEach(s => {
+    if (s.getAttribute('onclick') && s.getAttribute('onclick').includes("'" + id + "'")) s.classList.add('active');
+  });
+}
+
+function switchTab(tabId, groupId, idx) {
+  const group = document.getElementById(groupId);
+  const tabs = group.querySelectorAll('.tab');
+  let page = 'page-' + (groupId==='calc-tabs'?'calcul':'chaleur');
+  const contents = document.getElementById(page).querySelectorAll('.tab-content');
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.style.display = 'none');
+  tabs[idx].classList.add('active');
+  if (contents[idx]) contents[idx].style.display = 'block';
+}
+
+// ════════════════════════════════════════════
+// HORLOGE
+// ════════════════════════════════════════════
+function clock() {
+  const now = new Date();
+  document.getElementById('sb-clock').textContent = now.toLocaleTimeString('fr-FR');
+}
+setInterval(clock, 1000); clock();
+
+// ════════════════════════════════════════════
+// SIMULATION TEMPERATURE (live)
+// ════════════════════════════════════════════
+let simTemp = 18.2;
+let consigne = 18;
+setInterval(() => {
+  const diff = consigne - simTemp;
+  simTemp += diff * 0.08 + (Math.random() - 0.5) * 0.1;
+  simTemp = Math.round(simTemp * 10) / 10;
+  const els = ['d-tin','ct-tin','ct-t1','sb-tin'];
+  els.forEach(id => { const el=document.getElementById(id); if(el) el.textContent = simTemp + '°C'; });
+  document.getElementById('d-temp-card').textContent = simTemp;
+  document.getElementById('sb-temp-status').textContent = simTemp + '°C / ' + consigne + '°C';
+  checkAlertes();
+}, 3000);
+
+// ════════════════════════════════════════════
+// THERMOSTAT
+// ════════════════════════════════════════════
+function updateThermostat(val) {
+  document.getElementById('ct-consigne-big').textContent = val + '°C';
+}
+function setConsigne() {
+  consigne = parseInt(document.getElementById('ct-slider').value);
+  document.getElementById('ct-consigne').textContent = consigne + '°C';
+  document.getElementById('ct_cons').value = consigne;
+  calcHeure();
+}
+
+// ════════════════════════════════════════════
+// BAR CHART IRRIGATION
+// ════════════════════════════════════════════
+function buildChart() {
+  const el = document.getElementById('d-chart-conso');
+  if (!el) return;
+  const vals = [0,0,8,10,10,5,0,0];
+  const lbls = ['S1','S2','S3','S4','S1','S2','S3','S4'];
+  const maxV = Math.max(...vals) || 1;
+  el.innerHTML = vals.map((v,i) => `
+    <div class="bar-wrap">
+      <div class="bar-val">${v}</div>
+      <div class="bar" style="height:${Math.max(4,v/maxV*80)}px"></div>
+      <div class="bar-lbl">${lbls[i]}</div>
+    </div>`).join('');
+}
+buildChart();
+
+// ════════════════════════════════════════════
+// CALCUL CHALEUR — Formules Chafai (2024)
+// ════════════════════════════════════════════
+function calcChaleur() {
+  const L   = +document.getElementById('ch_L').value   || 100;
+  const W   = +document.getElementById('ch_W').value   || 100;
+  const H   = +document.getElementById('ch_H').value   || 5;
+  const Hf  = +document.getElementById('ch_Hf').value  || 1.5;
+  const toit = document.getElementById('ch_toit').value;
+  const Ti  = +document.getElementById('ch_Ti').value  || 18;
+  const To  = +document.getElementById('ch_To').value  || 5;
+  const U   = +document.getElementById('ch_U').value   || 3.2;
+  const ACH = +document.getElementById('ch_ACH').value || 0.75;
+  const eta = +document.getElementById('ch_eta').value || 0.90;
+
+  // Géométrie
+  const Ssol = L * W;
+  const Amurs = 2 * (L + W) * H;
+  const Atoit = toit === 'plat' ? L * W : 2 * Math.sqrt(Math.pow(8/2,2)+Math.pow(Hf,2)) * L * Math.round(W/8);
+  const A = Math.round(Amurs + Atoit);
+  const V = Math.round(toit === 'plat' ? L*W*H : L*W*H + L*W*Hf/2);
+
+  // Qt = U × A × ΔT  [Eq. II.5]
+  const dT = Ti - To;
+  const Qt = parseFloat((U * A * dT / 1000).toFixed(1));
+
+  // Qi = V × ACH × Cp × ρ × ΔT / 1000  [Eq. II.6]
+  const Qi = parseFloat((V * ACH * 1005 * 1.2 * dT / 1e6).toFixed(1));
+  const Qtot = parseFloat((Qt + Qi).toFixed(1));
+  const Pchaud = parseFloat((Qtot / eta).toFixed(1));
+  const Nchaud = Math.ceil(Pchaud / 500);
+
+  // Update géométrie
+  document.getElementById('ch_ssol').textContent = Ssol.toLocaleString('fr-FR') + ' m²';
+  document.getElementById('ch_A').textContent    = A.toLocaleString('fr-FR') + ' m²';
+  document.getElementById('ch_V').textContent    = V.toLocaleString('fr-FR') + ' m³';
+
+  // Update résultats
+  ['r_U','r_A','r_V','r_ACH','r_dT','r_UAdT','r_Qt','r_Qi',
+   'r2_Qt','r2_Qi','r2_Qtot','m_Qt','m_Qi','m_Qtot','m_Pchaud',
+   'h-qt','h-qi','h-qtot','h-nchaud'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const vals = {
+      'r_U': U + ' W/m²·°C',
+      'r_A': A.toLocaleString('fr-FR') + ' m²',
+      'r_V': V.toLocaleString('fr-FR') + ' m³',
+      'r_ACH': ACH + ' h⁻¹',
+      'r_dT': dT + ' °C',
+      'r_UAdT': Math.round(U*A*dT).toLocaleString('fr-FR') + ' W',
+      'r_Qt': Qt + ' kW', 'r2_Qt': Qt + ' kW', 'm_Qt': Qt, 'h-qt': Qt,
+      'r_Qi': Qi + ' kW', 'r2_Qi': Qi + ' kW', 'm_Qi': Qi, 'h-qi': Qi,
+      'r2_Qtot': Qtot + ' kW', 'm_Qtot': Qtot, 'h-qtot': Qtot.toLocaleString('fr-FR'),
+      'm_Pchaud': Pchaud, 'h-nchaud': Nchaud,
+    };
+    el.textContent = vals[id] !== undefined ? vals[id] : el.textContent;
+  });
+
+  // Barre répartition
+  const pctQt = Math.round(Qt/Qtot*100);
+  const el_bqt = document.getElementById('bar_qt');
+  const el_bqi = document.getElementById('bar_qi');
+  if (el_bqt) el_bqt.style.width = pctQt + '%';
+  if (el_bqi) el_bqi.style.width = (100-pctQt) + '%';
+  const elPQ = document.getElementById('pct_qt');
+  const elPI = document.getElementById('pct_qi');
+  if (elPQ) elPQ.textContent = pctQt + '%';
+  if (elPI) elPI.textContent = (100-pctQt) + '%';
+
+  calcCircuit(Qtot, V, A, dT);
+  calcChaud(Pchaud);
+  calcPellets();
+}
+
+// ════════════════════════════════════════════
+// CALCUL CIRCUIT EAU — Eq. III.9 (Chafai)
+// ════════════════════════════════════════════
+function calcCircuit(QtotIn, Vin, Ain, dTin) {
+  const Qtot = QtotIn !== undefined ? QtotIn :
+    parseFloat(document.getElementById('m_Qtot').textContent) || 1087;
+  const Tdep  = +document.getElementById('cc_Tdep').value || 70;
+  const Tret  = +document.getElementById('cc_Tret').value || 50;
+  const esp   = +document.getElementById('cc_esp').value  || 4.35;
+  const v     = +document.getElementById('cc_v').value    || 0.70;
+  const L     = +document.getElementById('ch_L').value    || 100;
+  const W     = +document.getElementById('ch_W').value    || 100;
+
+  const dTeau = Tdep - Tret;
+  const meau  = parseFloat((Qtot * 1000 / (4184 * dTeau)).toFixed(3));
+  const Qeau  = parseFloat((meau * 3600).toFixed(1));
+  const Ncirc = Math.round(W / esp);
+  const Qcirc = parseFloat((Qeau / Ncirc).toFixed(2));
+
+  const Sec   = (Qcirc / 3600) / v;
+  const Dcalc = parseFloat((Math.sqrt(4 * Sec / Math.PI) * 1000).toFixed(1));
+
+  const DNS   = [20,25,32,40,50,65,80,100,125,150];
+  const chooseDN = (q, spd) => {
+    for (const dn of DNS) {
+      if (Math.PI * Math.pow(dn/2000,2) * spd * 3600 >= q) return dn;
+    }
+    return 150;
+  };
+  const dn    = chooseDN(Qcirc, v);
+  const Vreel = parseFloat(((Qcirc/3600)/(Math.PI*Math.pow(dn/2000,2))).toFixed(2));
+  const dnColl= chooseDN(Qeau, v);
+  const Ltot  = Ncirc * 2 * L + 2 * L;
+
+  const safe = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  safe('cc_dT',   dTeau + ' °C');
+  safe('cc_meau', meau + ' kg/s');
+  safe('cc_Qeau', Qeau + ' m³/h');
+  safe('cc_Ncirc',Ncirc);
+  safe('cc_Qcirc',Qcirc + ' m³/h');
+  safe('cc_Dcalc',Dcalc + ' mm');
+  safe('cc_DN',   'DN ' + dn);
+  safe('cc_Vreel',Vreel + ' m/s' + (Vreel >= 0.65 && Vreel <= 1.1 ? ' ✓' : ' ⚠'));
+  safe('cc_DNcoll','DN ' + dnColl);
+  safe('cc_Ltot', Ltot.toLocaleString('fr-FR') + ' m');
+
+  // Tableau réseau
+  const tbody = document.getElementById('cc_tbody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr><td>Collecteur départ</td><td>1</td><td>DN ${dnColl}</td><td>${L}</td><td>${Qeau} m³/h</td></tr>
+      <tr><td>Collecteur retour</td><td>1</td><td>DN ${dnColl}</td><td>${L}</td><td>${Qeau} m³/h</td></tr>
+      <tr><td>Tuyaux aller</td><td>${Ncirc}</td><td>DN ${dn}</td><td>${L}</td><td>${Qcirc} m³/h</td></tr>
+      <tr><td>Tuyaux retour</td><td>${Ncirc}</td><td>DN ${dn}</td><td>${L}</td><td>${Qcirc} m³/h</td></tr>
+      <tr class="result-row fire-row"><td><strong>TOTAL</strong></td><td>—</td><td>—</td><td>—</td><td>${Ltot.toLocaleString('fr-FR')} m</td></tr>`;
+  }
+}
+
+// ════════════════════════════════════════════
+// CALCUL CHAUDIERES
+// ════════════════════════════════════════════
+function calcChaud(PchaudIn) {
+  const Pchaud= PchaudIn !== undefined ? PchaudIn :
+    parseFloat(document.getElementById('m_Pchaud').textContent) || 1208;
+  const Punit = +document.getElementById('ck_Punit').value || 500;
+  const conso = +document.getElementById('ck_conso').value || 113;
+  const N     = Math.ceil(Pchaud / Punit);
+  const Pinst = N * Punit;
+  const marge = ((Pinst - Pchaud) / Pchaud * 100).toFixed(0);
+
+  const safe = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  safe('ck_Preq',  Pchaud.toFixed(1) + ' kW');
+  safe('ck_N',     N);
+  safe('ck_Pinst', Pinst + ' kW');
+  safe('ck_marge', '+' + marge + '%');
+  safe('ck_t1',    N*Punit + ' kW');
+  safe('ck_t2',    N*554 + ' kW');
+  safe('ck_t3',    N*conso + ' kg/h');
+  safe('ck_t4',    N*1050 + ' kg');
+  safe('ck_t5',    N*1485 + ' L');
+}
+
+// ════════════════════════════════════════════
+// CALCUL PELLETS
+// ════════════════════════════════════════════
+function calcPellets() {
+  const hj    = +document.getElementById('pl_hj').value   || 14;
+  const js    = +document.getElementById('pl_js').value   || 120;
+  const tc    = +document.getElementById('pl_tc').value   || 60;
+  const prix  = +document.getElementById('pl_prix').value || 350;
+  const N     = parseInt(document.getElementById('ck_N').textContent) || 3;
+  const conso_nom = 113 * N;
+
+  const creel = parseFloat((conso_nom * tc/100).toFixed(1));
+  const cjour = parseFloat((creel * hj / 1000).toFixed(2));
+  const auto  = parseFloat((N * 1050 / creel).toFixed(1));
+  const csais = parseFloat((creel * hj * js / 1000).toFixed(1));
+  const cout  = parseFloat((csais * prix).toFixed(0));
+  const hant  = hj * js;
+  const silo  = Math.ceil(creel * 72 / 1000);
+
+  const safe = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  safe('pl_creel', creel + ' kg/h');
+  safe('pl_cjour', cjour + ' tonnes/jour');
+  safe('pl_auto',  auto + ' h (≈ ' + (auto/hj).toFixed(1) + ' jours)');
+  safe('pl_csais', csais + ' tonnes');
+  safe('pl_cout',  cout.toLocaleString('fr-FR') + ' DT');
+  safe('pl_hant',  hant.toLocaleString('fr-FR'));
+  safe('pl_silo',  silo);
+}
+
+// ════════════════════════════════════════════
+// CALCUL HEURES CHAUFFAGE
+// ════════════════════════════════════════════
+function calcHeure() {
+  const hobj   = +document.getElementById('ct_hobj').value   || 14;
+  const cons   = +document.getElementById('ct_cons').value   || 18;
+  const tnuit  = +document.getElementById('ct_tnuit').value  || 5;
+  const tjour  = +document.getElementById('ct_tjour').value  || 14;
+
+  const hnuit  = tnuit < cons ? Math.min(12, hobj) : 0;
+  const hjour  = tjour < cons ? Math.max(0, hobj - hnuit) : 0;
+  const htot   = hnuit + hjour;
+  const hsais  = htot * 120;
+  const djc    = Math.max(0, cons - (tnuit+tjour)/2) * 120;
+
+  const safe = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  safe('ct_hnuit', hnuit + ' h (nuit < ' + cons + '°C)');
+  safe('ct_hjour', hjour + ' h (jour < ' + cons + '°C)');
+  safe('ct_htot',  htot + ' h/jour');
+  safe('ct_hsais', hsais.toLocaleString('fr-FR') + ' h/saison');
+  safe('ct_djc',   djc.toFixed(0) + ' DJC (base ' + cons + '°C)');
+  safe('ct-hchauf', htot);
+}
+
+// ════════════════════════════════════════════
+// PROGRAMME CHAUFFAGE
+// ════════════════════════════════════════════
+function calcProgChauf() {
+  const tl    = document.getElementById('ct_timeline');
+  if (!tl) return;
+  const tnuit     = document.getElementById('ct_tnuit_h').value || '18:00';
+  const tnuit_fin = document.getElementById('ct_tnuit_fin').value || '08:00';
+  const cons_nuit = document.getElementById('ct_cons_nuit').value || 16;
+  const cons_jour = document.getElementById('ct_cons_jour').value || 18;
+
+  const slots = [
+    { h:'00:00', fin:'06:00', cons:cons_nuit, lbl:'Chauffage nuit', on:true },
+    { h:'06:00', fin:'08:00', cons:cons_nuit, lbl:'Transition matin', on:true },
+    { h:'08:00', fin:'12:00', cons:cons_jour, lbl:'Chauffage jour', on:true },
+    { h:'12:00', fin:'16:00', cons:cons_jour, lbl:'Maintien température', on:true },
+    { h:'16:00', fin:'18:00', cons:cons_jour, lbl:'Fin journée', on:true },
+    { h:'18:00', fin:'22:00', cons:cons_nuit, lbl:'Début nuit', on:true },
+    { h:'22:00', fin:'24:00', cons:cons_nuit, lbl:'Chauffage nuit', on:true },
+  ];
+  tl.innerHTML = slots.map(s => `
+    <div class="tl-item">
+      <span class="tl-time fire">${s.h}</span>
+      <span class="tl-dot fire"></span>
+      <div class="tl-content">
+        <div class="tc-title">${s.lbl} <span class="badge badge-fire">${s.cons}°C</span></div>
+        <div class="tc-sub">Consigne : ${s.cons}°C jusqu'à ${s.fin}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════
+// ALERTES TEMPERATURE
+// ════════════════════════════════════════════
+function checkAlertes() {
+  const el_froid = +document.getElementById('ct_seuil_froid').value || 14;
+  const el_chaud = +document.getElementById('ct_seuil_chaud').value || 28;
+  const el_hum   = +document.getElementById('ct_seuil_hum').value   || 85;
+  const tin = simTemp;
+  const hum = 72;
+  const alertes = document.getElementById('ct_alertes');
+  if (!alertes) return;
+  let html = '';
+  if (tin < el_froid) html += `<div class="alert alert-fire"><span class="alert-icon">🥶</span><div><strong>ALERTE FROID</strong> — T intérieure ${tin}°C < seuil ${el_froid}°C. Augmenter la consigne de chauffage.</div></div>`;
+  else if (tin >= el_froid && tin <= consigne + 2) html += `<div class="alert alert-success"><span class="alert-icon">✓</span><div>Température dans les limites — ${tin}°C (seuils : ${el_froid}°C / ${el_chaud}°C)</div></div>`;
+  if (tin > el_chaud) html += `<div class="alert alert-warn"><span class="alert-icon">🌡</span><div><strong>ALERTE CHALEUR</strong> — T intérieure ${tin}°C > seuil ${el_chaud}°C. Activer ventilation.</div></div>`;
+  if (hum > el_hum) html += `<div class="alert alert-warn"><span class="alert-icon">💧</span><div><strong>Humidité élevée</strong> — ${hum}% > seuil ${el_hum}%. Risque de maladies fongiques.</div></div>`;
+  alertes.innerHTML = html || `<div class="alert alert-success"><span class="alert-icon">✓</span><div>Tous les paramètres sont dans les limites normales.</div></div>`;
+}
+
+// ════════════════════════════════════════════
+// CALCULS IRRIGATION (originaux conservés)
+// ════════════════════════════════════════════
+function calcB() {
+  const surf=+document.getElementById('b_surf').value,dens=+document.getElementById('b_dens').value,
+    ns=+document.getElementById('b_nsec').value,dose=+document.getElementById('b_dose').value,
+    qg=+document.getElementById('b_qg').value,esp=+document.getElementById('b_esp').value,
+    ll=+document.getElementById('b_ll').value;
+  const plants=surf*dens,pps=plants/ns,ppl=Math.round(ll/esp),nlig=Math.round(pps/ppl),
+    ql=ppl*qg,qs=(pps*qg)/1000,bsj=pps*dose/1000,btj=plants*dose/1000;
+  document.getElementById('rb_pt').textContent=plants.toLocaleString('fr-FR');
+  document.getElementById('rb_ps').textContent=Math.round(pps).toLocaleString('fr-FR');
+  document.getElementById('rb_ls').textContent=nlig;
+  document.getElementById('rb_pl').textContent=ppl;
+  document.getElementById('rb_ql').textContent=Math.round(ql)+' L/h';
+  document.getElementById('rb_qs').textContent=qs.toFixed(2)+' m³/h';
+  document.getElementById('rb_bsj').textContent=bsj.toFixed(1)+' m³';
+  document.getElementById('rb_btj').textContent=btj.toFixed(1)+' m³/j';
+}
+function calcC() {
+  const qp=+document.getElementById('c_qp').value,v=+document.getElementById('c_v').value,
+    ql=+document.getElementById('c_ql').value/1000,vl=+document.getElementById('c_vl').value;
+  const DNs=[16,20,25,32,40,50,63,75,90,110];
+  const dins={16:12.4,20:16.2,25:20.4,32:26.2,40:32.6,50:40.8,63:51.4,75:61.4,90:73.6,110:90};
+  const dp=18.8*Math.sqrt(qp/v),dl=18.8*Math.sqrt(ql/vl);
+  const pickDN=d=>DNs.find(dn=>dins[dn]>=d)||110;
+  const dnp=pickDN(dp),dinp=dins[dnp],dnl=pickDN(dl),dinl=dins[dnl];
+  const vrp=(qp/3600)/(Math.PI*(dinp/1000)**2/4),vrl=(ql/3600)/(Math.PI*(dinl/1000)**2/4);
+  const ok=v=>v>=0.5&&v<=2.5?'<span class="badge badge-green">✓ OK</span>':'<span class="badge badge-red">✗ Hors plage</span>';
+  ['p','s','l'].forEach((t,i)=>{
+    const dn=i<2?dnp:dnl,din=i<2?dinp:dinl,vr=i<2?vrp:vrl,dth=i<2?dp:dl;
+    document.getElementById('c_dth_'+t).textContent=dth.toFixed(1)+' mm';
+    document.getElementById('c_dn_'+t).textContent='DN '+dn+' (Ø'+din+')';
+    document.getElementById('c_vr_'+t).textContent=vr.toFixed(3)+' m/s';
+    document.getElementById('c_ok_'+t).innerHTML=ok(vr);
+  });
+}
+function calcP() {
+  const q=+document.getElementById('p_q').value/3600,d=+document.getElementById('p_d').value/1000,
+    l1=+document.getElementById('p_l1').value,l2=+document.getElementById('p_l2').value,
+    nv=+document.getElementById('p_nv').value,nt=+document.getElementById('p_nt').value;
+  const A=Math.PI*d**2/4,V=q/A,Re=V*d/1.007e-6,lam=0.316/Re**0.25,v2g=V**2/19.62;
+  const jl1=lam*(l1/d)*v2g,jl2=lam*(l2/d)*v2g,js=(nv*0.30+nt*0.75)*v2g,tot=jl1+jl2+js;
+  const reg=Re<2300?'Laminaire':Re<10000?'Transitoire':'Turbulent';
+  document.getElementById('p_v').textContent=V.toFixed(3)+' m/s';
+  document.getElementById('p_re').textContent=Math.round(Re).toLocaleString('fr-FR');
+  document.getElementById('p_reg').textContent=reg;
+  document.getElementById('p_lam').textContent=lam.toFixed(5);
+  document.getElementById('p_jl1').textContent=jl1.toFixed(3)+' mCE';
+  document.getElementById('p_jl2').textContent=jl2.toFixed(3)+' mCE';
+  document.getElementById('p_js').textContent=js.toFixed(3)+' mCE';
+  document.getElementById('p_tot').textContent=tot.toFixed(3)+' mCE';
+}
+function calcT() {
+  const pg=+document.getElementById('t_pg').value,jl1=+document.getElementById('t_jl1').value,
+    jl2=+document.getElementById('t_jl2').value,js=+document.getElementById('t_js').value,
+    jlat=+document.getElementById('t_jlat').value,jf=+document.getElementById('t_jfilt').value,
+    jfe=+document.getElementById('t_jfert').value,m=+document.getElementById('t_marge').value/100,
+    eta=+document.getElementById('t_eta').value,q=+document.getElementById('t_q').value;
+  const base=pg+jl1+jl2+js+jlat+jf+jfe,tdh=base*(1+m),phyd=1000*9.81*(q/3600)*tdh/1000,
+    pa=phyd/eta,hp=pa/0.746,hpm=hp*1.25;
+  const pompes=[0.5,0.75,1,1.5,2,2.5,3,4,5,7.5,10],rec=pompes.find(p=>p>=hpm)||10;
+  document.getElementById('t_tdh').textContent=tdh.toFixed(1);
+  document.getElementById('t_bar').textContent=(tdh/10).toFixed(2);
+  document.getElementById('t_phyd').textContent=phyd.toFixed(3);
+  document.getElementById('t_pa').textContent=pa.toFixed(3);
+  document.getElementById('t_hpc').textContent=hp.toFixed(2)+' HP';
+  document.getElementById('t_hpm').textContent=hpm.toFixed(2)+' HP';
+  document.getElementById('t_rec').textContent=rec+' HP / '+(rec*0.746).toFixed(2)+' kW';
+}
+function calcSect() {
+  const p=+document.getElementById('s_plants').value,l=+document.getElementById('s_lignes').value,
+    q=+document.getElementById('s_qg').value;
+  document.getElementById('s_qinst').textContent=(p*q/1000).toFixed(2)+' m³/h';
+  document.getElementById('s_ppl').textContent=Math.round(p/l);
+  document.getElementById('s_ql').textContent=Math.round((p/l)*q)+' L/h';
+}
+function calcProg() {
+  const startVal=document.getElementById('pr_start').value||'06:00';
+  const [hh,mm]=startVal.split(':').map(Number);
+  const dose=+document.getElementById('pr_dose').value,qg=+document.getElementById('pr_qg').value,
+    freq=+document.getElementById('pr_freq').value,ns=+document.getElementById('pr_ns').value;
+  const tc=(dose/qg)*60/freq,tour=tc*ns,ttot=tc*freq*ns/60;
+  document.getElementById('pr_tc').textContent=tc.toFixed(1)+' min';
+  document.getElementById('pr_tour').textContent=tour.toFixed(0)+' min';
+  document.getElementById('pr_ttot').textContent=ttot.toFixed(1)+' h/jour';
+  let t=hh*60+mm;
+  const tl=document.getElementById('pr_timeline');
+  tl.innerHTML='';
+  const now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
+  for(let c=1;c<=freq;c++){
+    for(let s=1;s<=ns;s++){
+      const th=Math.floor(t/60)%24,tm=Math.round(t%60);
+      const tStr=th.toString().padStart(2,'0')+':'+tm.toString().padStart(2,'0');
+      const done=t<nowMin,running=t>=nowMin&&t<nowMin+tc;
+      const div=document.createElement('div');
+      div.className='tl-item';
+      div.innerHTML=`<span class="tl-time">${tStr}</span>
+        <span class="tl-dot ${done?'done':running?'':'pending'}"></span>
+        <div class="tl-content">
+          <div class="tc-title">Cycle ${c} — S${s} ${running?'<span class="badge badge-green">En cours</span>':done?'<span class="badge badge-blue">✓</span>':''}</div>
+          <div class="tc-sub">${tc.toFixed(0)} min</div>
+        </div>`;
+      tl.appendChild(div);
+      t+=tc;
+      if(tl.children.length>=18){
+        const more=document.createElement('div');
+        more.style.cssText='padding:8px 0;color:var(--text3);font-size:.75rem';
+        more.textContent='… '+((freq*ns)-18)+' cycles supplémentaires';
+        tl.appendChild(more);return;
+      }
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+calcB(); calcC(); calcP(); calcT(); calcSect(); calcProg();
+calcChaleur(); calcHeure(); calcProgChauf(); checkAlertes();
+
+const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const months=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const now2=new Date();
+const prDate=document.getElementById('pr_date');
+if(prDate) prDate.textContent=days[now2.getDay()]+' '+now2.getDate()+' '+months[now2.getMonth()]+' '+now2.getFullYear();
+</script>
+</body>
+</html>
