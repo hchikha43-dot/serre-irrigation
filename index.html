@@ -273,6 +273,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
   .chaud-grid{grid-template-columns:1fr}
 }
 @media (max-width: 768px) {
+
   .cards-grid,
   .secteurs-grid,
   .chaud-grid{
@@ -286,22 +287,20 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
 
   .nav-logo{
     font-size:0.9rem;
+    margin-left:0;
+    padding-left:5px;
   }
-  .nav-badge{
-  font-size:0.65rem;
-  padding:3px 6px;
-}
-  .nav-logo{
-  margin-left:0;
-  padding-left:5px;
-}
 
   .nav-logo span{
     font-size:0.6rem;
   }
 
-}
+  .nav-badge{
+    font-size:0.65rem;
+    padding:3px 6px;
+  }
 
+  /* 🔥 AJOUTE CE BLOC ICI */
   .main{
     padding:1rem;
   }
@@ -320,17 +319,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
     gap:10px;
   }
 
-  .cards-grid,
-  .secteurs-grid,
-  .chaud-grid{
-    grid-template-columns:1fr !important;
-  }
-
-  .form-grid,
-  .form-grid.grid3{
-    grid-template-columns:1fr !important;
-  }
-
   .nav-links{
     overflow-x:auto;
     flex-wrap:nowrap;
@@ -345,7 +333,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,0.9
     display:block;
     overflow-x:auto;
   }
-  
+
 }
 </style>
 </head>
